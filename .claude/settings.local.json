@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "PowerShell(Start-Process \"mshta.exe\" -ArgumentList \"C:\\\\first-cc\\\\pomodoro.hta\")",
-      "PowerShell(winget install *)"
+      "PowerShell(winget install *)",
+      "PowerShell(Get-Item *)"
     ]
   }
 }

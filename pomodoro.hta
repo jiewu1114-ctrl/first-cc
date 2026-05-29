@@ -1,0 +1,597 @@
+<html>
+<head>
+<HTA:APPLICATION
+  ID="PomodoroTimer"
+  APPLICATIONNAME="番茄钟 / Pomodoro"
+  SCROLL="no"
+  SINGLEINSTANCE="yes"
+  BORDER="thin"
+  INNERBORDER="no"
+  CAPTION="yes"
+  SHOWINTASKBAR="yes"
+  MINIMIZEBUTTON="yes"
+  MAXIMIZEBUTTON="no"
+/>
+<title>番茄钟</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=11">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Microsoft YaHei UI','Microsoft YaHei',Arial,sans-serif;
+  background: #16213e;
+  color: #fff;
+  overflow: hidden;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#app {
+  width: 400px;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+/* ── header row ── */
+.hdr-row {
+  width: 100%;
+  position: relative;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 16px 16px 6px;
+}
+.hdr {
+  font-size: 21px;
+  font-weight: 700;
+  color: #ff6b6b;
+  letter-spacing: 1px;
+}
+.lang-btn {
+  position: absolute;
+  right: 16px;
+  padding: 4px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.5px;
+}
+.lang-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+/* ── mode tabs ── */
+.tabs {
+  display: -ms-flexbox;
+  display: flex;
+  background: rgba(255,255,255,0.06);
+  border-radius: 22px;
+  padding: 4px;
+  margin: 6px 0 10px;
+}
+.tab {
+  padding: 6px 15px;
+  border-radius: 18px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tab.on { background: #ff6b6b; color: #fff; }
+.tab:hover { color: #fff; }
+
+/* ── ring timer ── */
+.ring-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 0 10px;
+}
+.ring-svg {
+  width: 240px; height: 240px;
+  display: block;
+  -ms-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+}
+.r-bg { fill:none; stroke:rgba(255,255,255,0.07); stroke-width:13; }
+.r-fg {
+  fill: none;
+  stroke: #ff6b6b;
+  stroke-width: 13;
+  stroke-linecap: round;
+  -webkit-transition: stroke-dashoffset 0.9s linear, stroke 0.4s;
+  transition: stroke-dashoffset 0.9s linear, stroke 0.4s;
+}
+.ring-center {
+  position: absolute;
+  top:0; left:0; right:0; bottom:0;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+.digits {
+  font-size: 52px;
+  font-weight: 200;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: #fff;
+}
+.mode-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+/* ── pomodoro dots ── */
+.dots {
+  display: -ms-flexbox;
+  display: flex;
+  gap: 9px;
+  margin: 2px 0 3px;
+}
+.dot {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.15);
+}
+.dot.on { background: #ff6b6b; border-color: #ff6b6b; }
+.status-txt {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 12px;
+}
+
+/* ── controls ── */
+.ctrl {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ico-btn {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 19px;
+  font-family: inherit;
+  line-height: 42px;
+  text-align: center;
+}
+.ico-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.go-btn {
+  width: 120px; height: 46px;
+  border-radius: 23px;
+  border: none;
+  background: #ff6b6b;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.go-btn:hover { background: #ff5050; }
+
+/* ── settings ── */
+.cfg {
+  display: -ms-flexbox;
+  display: flex;
+  width: 356px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 10px;
+}
+.cfg-col {
+  -ms-flex: 1; flex: 1;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -ms-flex-align: center;
+  align-items: center;
+  padding: 10px 4px;
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+.cfg-col:last-child { border-right: none; }
+.cfg-name {
+  font-size: 9px;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.cfg-row {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  gap: 6px;
+}
+.adj-btn {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: center;
+  line-height: 18px;
+}
+.adj-btn:hover { background: rgba(255,255,255,0.18); color:#fff; }
+.adj-val {
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── footer ── */
+.ftr {
+  font-size: 11px;
+  color: rgba(255,255,255,0.22);
+  margin: 9px 0 14px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="hdr-row">
+    <div class="hdr" id="hdrTitle">&#127813; 番茄钟</div>
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tw" onclick="switchMode('work')">专注</button>
+    <button class="tab"    id="ts" onclick="switchMode('shortBreak')">短休息</button>
+    <button class="tab"    id="tl" onclick="switchMode('longBreak')">长休息</button>
+  </div>
+
+  <div class="ring-wrap">
+    <svg class="ring-svg" viewBox="0 0 240 240">
+      <circle class="r-bg" cx="120" cy="120" r="100"/>
+      <circle class="r-fg" id="ring" cx="120" cy="120" r="100"
+              stroke-dasharray="628.32" stroke-dashoffset="0"/>
+    </svg>
+    <div class="ring-center">
+      <div class="digits"     id="digits">25:00</div>
+      <div class="mode-label" id="modeLabel">工作时间</div>
+    </div>
+  </div>
+
+  <div class="dots">
+    <div class="dot" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+  </div>
+  <div class="status-txt" id="statusTxt">第 1 / 4 个番茄</div>
+
+  <div class="ctrl">
+    <button class="ico-btn" id="resetBtn" onclick="resetTimer()" title="重置">&#8635;</button>
+    <button class="go-btn"  id="goBtn"    onclick="toggleTimer()">开始</button>
+    <button class="ico-btn" id="skipBtn"  onclick="skipSession()" title="跳过">&#9197;</button>
+  </div>
+
+  <div class="cfg">
+    <div class="cfg-col">
+      <div class="cfg-name" id="cfgNameWork">专注 (分钟)</div>
+      <div class="cfg-row">
+        <button class="adj-btn" onclick="adjustSetting('work',-1)">-</button>
+        <span class="adj-val" id="cfgWork">25</span>
+        <button class="adj-btn" onclick="adjustSetting('work',1)">+</button>
+      </div>
+    </div>
+    <div class="cfg-col">
+      <div class="cfg-name" id="cfgNameShort">短休息 (分钟)</div>
+      <div class="cfg-row">
+        <button class="adj-btn" onclick="adjustSetting('short',-1)">-</button>
+        <span class="adj-val" id="cfgShort">5</span>
+        <button class="adj-btn" onclick="adjustSetting('short',1)">+</button>
+      </div>
+    </div>
+    <div class="cfg-col">
+      <div class="cfg-name" id="cfgNameLong">长休息 (分钟)</div>
+      <div class="cfg-row">
+        <button class="adj-btn" onclick="adjustSetting('long',-1)">-</button>
+        <span class="adj-val" id="cfgLong">15</span>
+        <button class="adj-btn" onclick="adjustSetting('long',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ftr" id="footer">今日完成: 0 个番茄</div>
+
+</div>
+
+<script language="JavaScript">
+var CIRC = 628.32; // 2 * PI * 100
+
+// ── i18n strings ──────────────────────────────────────────────────────────────
+var strings = {
+  zh: {
+    appTitle:    '番茄钟',
+    hdr:         '&#127813; 番茄钟',
+    langBtn:     'EN',
+    tabWork:     '专注',
+    tabShort:    '短休息',
+    tabLong:     '长休息',
+    modeWork:    '工作时间',
+    modeShort:   '短暂休息',
+    modeLong:    '长时休息',
+    statusWork:  function(n) { return '第 ' + n + ' / 4 个番茄'; },
+    statusShort: '休息一下，喝杯茶 ☕',
+    statusLong:  '好好休息，充充电 ★',
+    footer:      function(n) { return '今日完成: ' + n + ' 个番茄'; },
+    start:       '开始',
+    pause:       '暂停',
+    resume:      '继续',
+    reset:       '重置',
+    skip:        '跳过',
+    cfgWork:     '专注 (分钟)',
+    cfgShort:    '短休息 (分钟)',
+    cfgLong:     '长休息 (分钟)'
+  },
+  en: {
+    appTitle:    'Pomodoro',
+    hdr:         '&#127813; Pomodoro',
+    langBtn:     '中文',
+    tabWork:     'Focus',
+    tabShort:    'Short Break',
+    tabLong:     'Long Break',
+    modeWork:    'Focus Time',
+    modeShort:   'Short Break',
+    modeLong:    'Long Break',
+    statusWork:  function(n) { return 'Pomodoro ' + n + ' of 4'; },
+    statusShort: 'Take a break, have some tea ☕',
+    statusLong:  'Rest well, recharge ★',
+    footer:      function(n) { return 'Today: ' + n + ' pomodoro' + (n !== 1 ? 's' : '') + ' done'; },
+    start:       'Start',
+    pause:       'Pause',
+    resume:      'Resume',
+    reset:       'Reset',
+    skip:        'Skip',
+    cfgWork:     'Focus (min)',
+    cfgShort:    'Short (min)',
+    cfgLong:     'Long (min)'
+  }
+};
+
+// ── state ─────────────────────────────────────────────────────────────────────
+var lang        = 'zh';
+var settings    = { work: 25, short: 5, long: 15 };
+var currentMode = 'work';
+var isRunning   = false;
+var timeLeft    = 25 * 60;
+var totalSec    = 25 * 60;
+var ticker      = null;
+var cyclePos    = 0;
+var totalDone   = 0;
+
+var modeStroke = {
+  work:       '#ff6b6b',
+  shortBreak: '#4ecdc4',
+  longBreak:  '#45b7d1'
+};
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function T()    { return strings[lang]; }
+
+function goBtnText() {
+  if (isRunning)               return T().pause;
+  if (timeLeft < totalSec)     return T().resume;
+  return T().start;
+}
+
+// ── render ────────────────────────────────────────────────────────────────────
+function render() {
+  var m  = Math.floor(timeLeft / 60);
+  var s  = timeLeft % 60;
+  var ts = pad(m) + ':' + pad(s);
+
+  document.getElementById('digits').innerHTML = ts;
+  document.title = ts + ' - ' + T().appTitle;
+
+  var ratio  = totalSec > 0 ? timeLeft / totalSec : 0;
+  var ring   = document.getElementById('ring');
+  ring.style.strokeDashoffset = CIRC * (1 - ratio);
+  ring.style.stroke = modeStroke[currentMode];
+
+  var modeKey = currentMode === 'work' ? 'modeWork'
+              : currentMode === 'shortBreak' ? 'modeShort' : 'modeLong';
+  document.getElementById('modeLabel').innerHTML = T()[modeKey];
+
+  var st = currentMode === 'work'       ? T().statusWork(cyclePos + 1)
+         : currentMode === 'shortBreak' ? T().statusShort
+         : T().statusLong;
+  document.getElementById('statusTxt').innerHTML = st;
+  document.getElementById('footer').innerHTML = T().footer(totalDone);
+}
+
+// Refresh all static labels (tabs, buttons, cfg names) for current language.
+function renderLang() {
+  document.getElementById('hdrTitle').innerHTML     = T().hdr;
+  document.getElementById('langBtn').innerHTML      = T().langBtn;
+  document.getElementById('tw').innerHTML           = T().tabWork;
+  document.getElementById('ts').innerHTML           = T().tabShort;
+  document.getElementById('tl').innerHTML           = T().tabLong;
+  document.getElementById('resetBtn').title         = T().reset;
+  document.getElementById('skipBtn').title          = T().skip;
+  document.getElementById('cfgNameWork').innerHTML  = T().cfgWork;
+  document.getElementById('cfgNameShort').innerHTML = T().cfgShort;
+  document.getElementById('cfgNameLong').innerHTML  = T().cfgLong;
+  document.getElementById('goBtn').innerHTML        = goBtnText();
+  render();
+}
+
+function renderDots() {
+  for (var i = 0; i < 4; i++) {
+    document.getElementById('d' + i).className = 'dot' + (i < cyclePos ? ' on' : '');
+  }
+}
+
+// ── language toggle ───────────────────────────────────────────────────────────
+function toggleLang() {
+  lang = (lang === 'zh') ? 'en' : 'zh';
+  renderLang();
+}
+
+// ── timer controls ────────────────────────────────────────────────────────────
+function toggleTimer() {
+  if (isRunning) {
+    stopTicker();
+    document.getElementById('goBtn').innerHTML = T().resume;
+  } else {
+    isRunning = true;
+    document.getElementById('goBtn').innerHTML = T().pause;
+    ticker = setInterval(tick, 1000);
+  }
+}
+
+function tick() {
+  if (timeLeft > 0) {
+    timeLeft--;
+    render();
+  }
+  if (timeLeft <= 0) {
+    onComplete();
+  }
+}
+
+function stopTicker() {
+  isRunning = false;
+  if (ticker) { clearInterval(ticker); ticker = null; }
+}
+
+function resetTimer() {
+  stopTicker();
+  timeLeft = totalSec;
+  document.getElementById('goBtn').innerHTML = T().start;
+  render();
+}
+
+function skipSession() {
+  stopTicker();
+  document.getElementById('goBtn').innerHTML = T().start;
+  if (currentMode === 'work') onComplete();
+  else applyMode('work');
+}
+
+function onComplete() {
+  stopTicker();
+  document.getElementById('goBtn').innerHTML = T().start;
+  playSound();
+
+  if (currentMode === 'work') {
+    totalDone++;
+    cyclePos++;
+    renderDots();
+    if (cyclePos >= 4) {
+      cyclePos = 0;
+      renderDots();
+      applyMode('longBreak');
+    } else {
+      applyMode('shortBreak');
+    }
+  } else {
+    applyMode('work');
+  }
+}
+
+function applyMode(mode) {
+  currentMode = mode;
+  document.getElementById('tw').className = 'tab' + (mode === 'work'       ? ' on' : '');
+  document.getElementById('ts').className = 'tab' + (mode === 'shortBreak' ? ' on' : '');
+  document.getElementById('tl').className = 'tab' + (mode === 'longBreak'  ? ' on' : '');
+
+  var mins = (mode === 'work') ? settings.work
+           : (mode === 'shortBreak') ? settings.short
+           : settings.long;
+  totalSec = mins * 60;
+  timeLeft  = totalSec;
+  render();
+}
+
+function switchMode(mode) {
+  stopTicker();
+  document.getElementById('goBtn').innerHTML = T().start;
+  applyMode(mode);
+}
+
+// ── settings ──────────────────────────────────────────────────────────────────
+function adjustSetting(type, delta) {
+  if (isRunning) return;
+  if (type === 'work') {
+    settings.work = Math.max(1, Math.min(60, settings.work + delta));
+    document.getElementById('cfgWork').innerHTML = settings.work;
+    if (currentMode === 'work') { totalSec = settings.work * 60; timeLeft = totalSec; }
+  } else if (type === 'short') {
+    settings.short = Math.max(1, Math.min(30, settings.short + delta));
+    document.getElementById('cfgShort').innerHTML = settings.short;
+    if (currentMode === 'shortBreak') { totalSec = settings.short * 60; timeLeft = totalSec; }
+  } else {
+    settings.long = Math.max(1, Math.min(60, settings.long + delta));
+    document.getElementById('cfgLong').innerHTML = settings.long;
+    if (currentMode === 'longBreak') { totalSec = settings.long * 60; timeLeft = totalSec; }
+  }
+  render();
+}
+
+// ── sound ─────────────────────────────────────────────────────────────────────
+function playSound() {
+  try {
+    var sh = new ActiveXObject('WScript.Shell');
+    sh.Run(
+      'powershell -WindowStyle Hidden -Command ' +
+      '"[console]::beep(880,150);' +
+      'Start-Sleep -Milliseconds 100;' +
+      '[console]::beep(1100,150);' +
+      'Start-Sleep -Milliseconds 100;' +
+      '[console]::beep(1320,350)"',
+      0, false
+    );
+  } catch (e) {}
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+window.onload = function () {
+  var W = 420, H = 590;
+  window.resizeTo(W, H);
+  window.moveTo(
+    Math.round((screen.availWidth  - W) / 2),
+    Math.round((screen.availHeight - H) / 2)
+  );
+  renderLang();
+  renderDots();
+};
+</script>
+</body>
+</html>
